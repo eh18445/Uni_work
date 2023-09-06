@@ -1,0 +1,410 @@
+---
+title: "Assignment 3"
+author: "Insert My Name"
+date: "2022-10-12"
+output: html_document # you can change to other output format if you want
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Exploratory data analysis
+
+
+## 1.1 (Q1)   
+First, create a vector called HawksTail, the elements of which are from the Tail column of Hawks data
+frame. Second, use the mean and median functions to compute the sample mean and sample median from the vector
+HawksTail
+
+```{r 1.1-1}
+HawksTail <- c(Hawks$Tail)
+
+HT_mean <- mean(HawksTail)
+print("Mean:")
+print(HT_mean)
+
+HT_median <- median(HawksTail)
+print("Median:")
+print(HT_median)
+```
+
+
+## 1.2 (Q1)
+Use a combination of the summarise(), mean() and median() to compute the sample mean, sample
+median and trimmed sample mean (with q = 0.5) of the Hawk’s wing length and Hawk’s weight (i.e., the
+Wing and Weight columns). You may need to remove the NA values. What can you say by comparing the
+results of the median and the trimmed mean that you obtain
+
+```{r 1.2-1}
+Hawks %>% select(Wing,Weight) %>% summarise(Wing_avg=mean(Wing,na.rm=TRUE),Wing_med=median(Wing,na.rm=TRUE),Wing_trim_avg=mean(Wing,na.rm=TRUE,trim=0.5),Weight_avg=mean(Weight,na.rm=TRUE),Weight_med=median(Weight,na.rm=TRUE),Weight_trim_avg=mean(Weight,na.rm=TRUE,trim=0.5)) %>% print()
+```
+
+
+
+## 1.2 (Q2)
+Combine them with the group_by() function to obtain a breakdown by species.
+
+```{r 1.2-2}
+Hawks %>% group_by(Species) %>% summarise(Wing_avg=mean(Wing,na.rm=TRUE),Wing_med=median(Wing,na.rm=TRUE),Wing_trim_avg=mean(Wing,na.rm=TRUE,trim=0.5),Weight_avg=mean(Weight,na.rm=TRUE),Weight_med=median(Weight,na.rm=TRUE),Weight_trim_avg=mean(Weight,na.rm=TRUE,trim=0.5)) %>% print()
+```
+
+
+##1.3 (Q1)
+Suppose that a variable of interest X has values X1, · · · , Xn. Suppose that X1, · · · , Xn has a sample
+mean A. Let a, b ∈ R be real numbers and define a new variable X˜ with X˜
+1, · · · , X˜
+n defined by X˜
+i = aXi + b
+for i = 1, 2, · · · , n. What is the sample mean of X˜
+1, · · · , X˜
+n as a function of a, b and A?
+Now using the vector HawksTail that you created in Section 1.1 as data and letting a = 2 and b = 3, verify
+your conclusion using R codes: Compute the mean of HawksTail*a+b and then compare it with the one
+obtained from the mean of HawksTail and your conclusion.
+
+```{r 1.3-1}
+A <- mean(HawksTail)
+a <- 2
+b <- 3
+
+HawksTail2 <- a*HawksTail+b
+print(mean(HawksTail2))
+
+print(b+a*A)
+```
+
+
+##1.3 (Q2)
+Suppose further that X1, · · · , Xn has sample variance p and standard deviation q. What is the sample
+variance of X˜
+1, · · · , X˜
+n? What is the sample standard deviation of X˜
+1, · · · , X˜
+n?
+Now using the vector HawksTail that you created in Section 1.1 as data and letting a = 2 and b = 3, verify
+your result using R codes again
+
+```{r 1.3-2}
+p <- var(HawksTail)
+q <- sd(HawksTail)
+
+#calculate with functions
+p2 <- var(HawksTail2) %>% print()
+q2 <- sd(HawksTail2) %>% print()
+#calculate with formulae
+print(p*a**2)
+print(a*q)
+```
+
+##1.4 (Q1)
+In this exercise we shall investigate the robustness of several location estimators: The sample mean, sample
+median and trimmed mean.
+
+We begin by extracting a vector called “hal” consisting of the talon lengths of all the hawks with any missing
+values removed.
+
+To investigate the effect of outliers on estimates of location we generate a new vector called “corrupted_hall”
+with 10 outliers each of value 100 
+
+We can then compute the mean of the original sample and the corrupted sample
+Now let’s investigate what happens as the number of outliers changes from 0 to 1000. The code below
+generates a vector called “means_vect” which gives the sample means of corrupted samples with different
+numbers of outliers. More precisely, means_vect is a vector of length 1001 with the i-th entry equal to the
+mean of a sample with i − 1 outliers.
+
+Copy and modify the above code to create an additional vector called “medians_vect” of length 1001 with
+the i-th entry equal to the median of a sample “corrupted_hal” with i − 1 outliers.
+
+```{r 1.4-1}
+hal <- Hawks$Hallux
+hal <- hal[!is.na(hal)]
+
+outlier_value <- 100
+num_outliers <- 10
+corrupted_hal <- c(hal,rep(outlier_value,times=num_outliers))
+
+mean(hal) %>% print()
+mean(corrupted_hal) %>% print()
+
+num_outliers_vect <- seq(0,1000)
+means_vect <- c()
+median_vect <- c()
+trim_means_vect <- c()
+
+#how does no. of outliers affect mean
+for (num_outliers in num_outliers_vect){
+  corrupted_hal <- c(hal,rep(outlier_value,times=num_outliers))
+  means_vect <- c(means_vect,mean(corrupted_hal))
+}
+#median
+for (num_outliers in num_outliers_vect){
+  corrupted_hal <- c(hal,rep(outlier_value,times=num_outliers))
+  median_vect <- c(median_vect,median(corrupted_hal))
+}
+```
+
+##1.4 (Q2)
+Amend the code further to add an additional vector called “t_means_vect” of length 1001 with the i-th entry
+equal to the trimmed mean of a sample with i − 1 outliers, where the trimmed mean has a trim fraction
+q = 0.1
+
+```{r 1.4-2}
+#trimmed mean q=0.1
+for (num_outliers in num_outliers_vect){
+  corrupted_hal <- c(hal,rep(outlier_value,times=num_outliers))
+  trim_means_vect <- c(trim_means_vect,mean(corrupted_hal,trim=0.1))
+}
+```
+
+##1.4 (Q3)
+Now you should have the vectors “num_outliers_vect”, “means_vect”, “medians_vect” and
+“t_means_vect”.Now use the code below to reshape and plot the data. Recall that the function pivot_longer() below is
+used to reshape the data
+
+```{r 1.4-3}
+df_means_medians <- data.frame(num_outliers=num_outliers_vect,mean=means_vect,median=median_vect,trim_mean=trim_means_vect)
+
+means_median_plot <- df_means_medians %>% pivot_longer(!num_outliers,names_to="Estimator",values_to="Value") 
+print(ggplot(means_median_plot,aes(x=num_outliers,color=Estimator,linetype=Estimator,y=Value)) + geom_line() + xlab("Number of Outliers"))
+
+```
+
+##1.5 (Q1)
+Use the functions ggplot() and geom_boxplot() to create a box plot which summarises
+the distribution of hawk weights broken down by species
+
+```{r 1.5-1}
+#box plot with weights broken down as species
+weight_plot <- ggplot(data=Hawks,aes(x=Species,y=Weight)) + geom_boxplot() + xlab("Species") + ylab("Weight (g)")
+print(weight_plot)
+```
+
+##1.5 (Q2)
+Compute the 0.25-quantile, 0.5-quantile, 0.75-quantile of the Weight grouped by Species.
+Now compare these values with the boxplot above. Can you explain which parts of the boxplot these numbers
+correspond to?
+
+```{r 1.5-2}
+#compute weights grouped by species
+Hawks %>% group_by(Species)%>% summarise(quantile025=quantile(Weight,probs=0.25,na.rm=TRUE),quantile050=quantile(Weight,probs=0.5,na.rm=TRUE),quantile075=quantile(Weight,probs=0.75,na.rm=TRUE)) %>% print()
+```
+
+##1.5 (Q3)
+Suppose we have a sample X1, · · · , Xn. Let “q25” denote the 0.25-quantile of the sample and let “q75” denote
+the 0.75-quantile of the sample. We can then define the interquartile range, denoted IQR by IQR := q75-q25.
+In the context of boxplots, an outlier Xi
+is any numerical value such that the following holds if either of the
+following holds:
+Xi < q25 − 1.5 × IQR, or
+Xi > q75 + 1.5 × IQR.
+Create a function called “num_outliers” which computes the number of outliers within a sample (with
+missing values excluded)
+
+```{r 1.5-3}
+num_outliers <- function (val){
+  val <- val[!is.na(data)]
+  iq_range <- IQR(val,na.rm=TRUE)
+  outliers <- val[(val>quantile75+1.5*iq_range)|(val<quantile25-1.5*iq_range)]
+  return(length(outliers))
+}
+num_outliers(c(0,40,60,185)) %>% print()
+```
+
+##1.5 (Q4)
+Now combine your function num_outliers() with the functions group_by() and summarise() to compute
+the number of outliers for the three samples of hawk weights broken down by species.
+
+```{r 1.5-4}
+Hawks %>% group_by(Species)%>% summarise(num_outliersweight=num_outliers(Weight)) %>% print()
+```
+
+##1.6 (Q1)
+Compute the covariance and correlation between the Weight and Wing of the Hawks data. You can use
+the cov and cor functions
+
+```{r 1.6-1}
+cov(Hawks$Weight,Hawks$Wing,use='complete.obs') %>% print()
+cor(Hawks$Weight,Hawks$Wing,use='complete.obs') %>% print()
+```
+
+#1.6 (Q2)
+ Suppose that we have a pair of variables: X with values X1, · · · , Xn and Y with values Y1, · · · , Yn.
+Suppose that X1, · · · , Xn and Y1, · · · , Yn have the sample covariance S and correlation R. Let a, b ∈ R be
+real numbers and define a new variable X˜ with X˜
+1, · · · , X˜
+n defined by X˜
+i = aXi + b for i = 1, 2, · · · , n. In
+addition, Let c, d ∈ R be real numbers and define a new variable Y˜ with Y˜
+1, · · · , Y˜
+n defined by Y˜
+i = cYi + d.
+What is the covariance between X˜
+1, · · · , X˜
+n and Y˜ with Y˜
+1, · · · , Y˜
+n (as a function of S, a, b, c, d)? Assuming
+that a ̸= 0 and c ̸= 0, what is the correlation between X˜
+1, · · · , X˜
+n and Y˜ with Y˜
+1, · · · , Y˜
+n?
+Let a = 2.4, b = 7.1, c = −1, d = 3, and let X be the hawk’s weight and Y be the hawk’s Wing.
+
+```{r 1.6-2}
+X = Hawks$Weight
+Y= Hawks$Wing
+
+a = 2.4
+b = 7.1
+c = -1
+d = 3
+
+X2 = a*X+b
+Y2 = c*Y+d
+
+cov(X2,Y2,use='complete.obs') %>% print()
+cor(X2,Y2,use='complete.obs') %>% print()
+
+print(a*c*cov(X,Y,use='complete.obs'))
+print(cor(X,Y,use='complete.obs'))
+```
+
+# 2. Random experiments, events and sample spaces, and the set theory
+##2.1 (Q1)
+random experiment: repeatable and has a well defined set of possible outcomes
+event: a set of possible outcomes 
+sample space: Set of all possible outcomes
+
+##2.1 (Q2)
+Consider a random experiment of rolling a dice twice. Give an example of what is an event in this
+random experiment. Also, can you write down the sample space as a set? What is the total number of
+different events in this experiment? Is the empty set considered as an event?
+
+event: a roll of the dice
+sample space: {1,2,3,4,5,6}
+total events: 2 events
+The empty set is considered an event
+
+##2.2 (Q1)
+Let the sets A, B, C be defined by A := {1, 2, 3}, B := {2, 4, 6}, C := {4, 5, 6}.
+
+1:What are the unions A ∪ B and A ∪ C?
+A ∪ B = {1,2,3,4,6}
+A ∪ C = {1,2,3,4,5,6}
+
+2:What are the intersections A ∩ B and A ∩ C?
+A ∩ B = {2}
+A ∩ C = {} empty set
+
+3:What are the complements A\B and A\C?
+A\B = {1,3}
+A\C = {1,2,3}
+
+4:Are A and B disjoint? Are A and C disjoint?
+A and B not disjoint
+A and C are disjoint
+
+5:Are B and A\B disjoint?
+Yes
+
+6:Write down a partition of {1,2,3,4,5,6} consisting of two sets. Also, write down another partition of
+{1,2,3,4,5,6} consisting of three sets.
+{1,2}{3,4,5,6}
+{1,2}{3,4}{5,6}
+
+##2.2 (Q2)
+Let Ω be a sample space. Recall that for an event A ⊆ Ω the complement Ac
+:= Ω\A := {w ∈ Ω : w /∈ A}.
+Take a pair of events A ⊆ Ω and B ⊆ Ω.
+
+1:Can you give an expression for (A^c)^c without using the notion of a complement?
+A^c = Ω\A
+(A^c)^c = Ω\ (Ω\A) = A
+
+2: What is Ω^c?
+results in empty set
+
+3:(Subsets) Show that if A ⊆ B, then B^c ⊆ A^c
+A ⊆ B: {Ω{B{A}}}
+B^c = Ω\B = {Ω{}}
+A^c = Ω\A = {Ω{B{}}}
+Therefore B^c ⊆ A^c
+
+4:Show that (A ∩ B)^c = A^c ∪ B^c. Let’s suppose we have a sequence of events A1, A2, · · · , AK ⊂ Ω. Can you write out an expression for (∩k=1toK Ak)^c?
+
+This is just difficult finished rest in notebook
+
+# 3. Visualisation
+
+## 3 (Q1)
+Use the ggplot and geom_density() functions to create the following density plot for the three species
+
+```{r 3-1}
+Hawk_plot <- ggplot(data=Hawks,aes(x=Tail,color=Species)) + xlab("Tail Length (mm)") + geom_density(adjust=0.5) + theme_bw() + ylab("Density")
+Hawk_plot %>% print()
+```
+
+
+## 3 (Q2)
+Use the ggplot and geom_violin() functions to create the following violin plot for the three species
+
+```{r 3-2}
+Hawk_plot2 <- ggplot(data=Hawks,aes(x=Tail,y=Species,fill=Species)) + xlab("Tail Length (mm)") + geom_violin() + ylab("Density")
+Hawk_plot2 %>% print()
+```
+
+## 3 (Q3)
+Generate a plot similar to the following plot using the ggplot() and geom_point() functions
+scatter plot of tail against weight
+
+```{r 3.3}
+Hawk_plot3 <- ggplot(data=Hawks,aes(x=Tail,y=Weight,color=Species,shape=Species)) + xlab('Tail Length (mm)') + ylab('Weight (g)') + geom_point()
+Hawk_plot3 %>% print()
+```
+
+1. How many aesthetics are present within the following plot?
+2. What are the glyphs within this plot?
+3. What are the visual cues being used within this plot?
+
+1: 4 aesthetics x-axis, y-axis, colour and shape
+2: The glyphs are points of different shape square, circle and triangle
+3: The visual cues are the colour and shape of the points
+
+## 3 (Q4)
+Generate the following plot using the ggplot(), geom_point(), geom_smooth() and facet_wrap() functions.
+Weight against tail for 3 different facet plots
+
+```{r 3.4}
+Hawk_plot4 <- ggplot(data=Hawks,aes(x=Tail,y=Weight,color=Species)) + xlab('Tail Length (mm)') + ylab('Weight (g)') + geom_point(na.rm=TRUE) + geom_smooth(na.rm=TRUE) + facet_wrap(~Species,scales='free_x')
+Hawk_plot4 %>% print()
+```
+
+1. What are the visual cues being used within this plot?
+2. Based on the plot below, what can we say about the relationship between the weight of the hawks and
+their tail lengths?
+
+1: The visual cues are the colour, and the trend line
+2: Based on the plot the weight is mostly constant no matter the tail size. The weight is different depending on the species.
+
+## 3 (Q5)
+First, compute the Weight and the Tail of the heaviest hawk in the dataset. You can use filter() and select()
+function to select proper data.
+Second, reuse the code that you create from Q(3), adding an arrow and an annotation to indicate the heaviest
+hawk.
+
+```{r 3.5}
+heaviest <- Hawks %>% filter(Weight==max(select(Hawks,Weight),na.rm=TRUE)) 
+Hawk_plot5 <- ggplot(data=Hawks,aes(x=Tail,y=Weight,color=Species,shape=Species)) + xlab('Tail Length (mm)') + ylab('Weight (g)') + geom_point(na.rm=TRUE) + geom_curve(x=175,xend=as.numeric(select(heaviest,Tail)),y=1750,yend=as.numeric(select(heaviest,Weight)),arrow=arrow(length=unit(0.5,'cm')),curvature=0.1,color='black') + geom_text(x=175,y=1730,label='Heaviest Hawk',color='black')
+Hawk_plot5 %>% print()
+```
+
+
+
+
+
+
+
+
+
+

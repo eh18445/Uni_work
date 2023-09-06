@@ -1,0 +1,28 @@
+---
+title: "Assignment1 markdown2"
+author: "Daniel Johnstone"
+date: "2022-09-29"
+output: html_document
+---
+
+## Wave Plot
+
+```{r}
+x <- c(seq(0,20,0.01)) #create vector 0 to 20 incremented 0.01
+y <- c(numeric(length(x))) #blank vector of same length of x
+
+for (i in 1:length(x)){
+y[i] <- sin(x[i])
+}
+
+sin_df <- data.frame(x,y) #dataframe of x and y
+
+head(sin_df,3)
+
+plot(sin_df)
+
+```
+
+$$\sin(x) = \sum_{n=1}^{\infty}(-1)^{n+1}\cdot\frac{x^{2n-1}}{(2n-1)!}\approx x-\frac{x^3}{3!}+\frac{x^5}{5!}-\frac{x^7}{7!}\ldots$$
+
+$$A=\left(\begin{matrix} a_{11} & a_{12}\\ a_{21} & a_{22} \end{matrix}\right)$$

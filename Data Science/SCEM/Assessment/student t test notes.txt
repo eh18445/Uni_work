@@ -1,0 +1,69 @@
+Notes on paired Student's t test
+
+need to know:
+hypothesis test description
+test statistic
+underlying assumptions
+explanation why it's useful for distinguishing null and alternative
+
+perform simulation study:
+find prob of type I error under null
+include randomly generated data that conforms to the null hypothesis
+
+Apply to real-world data:
+apply hypothesis test to real-world data set
+Approprite data for hypothesis test 
+
+Disscuss approriatness of test for this setting:
+how hypothesis corresponds to different aspects of the data set
+use plots to demonstrate validity of underlying assumpions
+draw satisical conclusion
+report value of test statistic, p-value and suitable measure of effect size
+
+Scientific conclusions:
+discuss conclusions drawn from hypothesis test
+how would conclusions be different if results of test were different
+discuss key experimental design considerations for drawing a scientific conclusion
+(An alternative experimental design might have allowed you to draw a conclusions about cause and effect)
+  
+
+Used for comparing 2 sets of measurememts to assess whether their population means differ.
+A paired difference test uses additional information about the sample to increase statistial power or or reduce effect of confounding variables.
+t-test is used for normally distributed difference (the standard deviation of difference is not known)
+Common paired difference test is used when measuring subjects before and after a treatment.
+By comparing the same patient's numbers before and after we are effectively using each patient as thir own control.
+That way the correct rejection of the null hypothesis can be much more likely.
+The higher statistical power comes at a price of more tests due to each subject needing to be tested twice.
+Becauase one half of the sample depends on the other half the paired version of the student's t-test has n/2-1 degrees of freedom.(n is total number of obserations).
+Sample must be doubled to achieve the same number of degrees of freedom.
+Paired sample t-tests typically consist of matched pairs of similar units or one group of units that has been tested twice (repeated measures t-test)
+
+A paired sample t-test based on 'matched pairs sample' results from an unpaired sample that is subsequently used to form a paired sample by using additional variables that were measured along with the variable of interest.
+The matching is carried out by identifying pairs of values consisting of one observation from each of the two samples where the pair is similar in terms of other measured variables. This is often used in observational studies to reduce/eliminate confounding variables.
+
+test statistic:
+t=(XBar_{D}-mu_{0})/(s_{D}/sqrt(n))
+XBar_{D}:average of difference between the two samples.
+s_{D}:standard deviation of difference between the two samples.
+mu_{0}:is equal to 0 if we want to test if average of difference is significantly different 
+n:number of pairs
+
+effect size:
+cohen's d statistic
+d=XBar_{D}/s_{D}
+
+In R: 
+t.test(data1,data2,var.equal=TRUE)
+
+
+
+fires data set:
+collected through internet
+incidents doesn't tell us the extent of the fire damage
+The county divisions contain different areas and so different density of fires.(probably doesn't matter)
+
+
+
+
+
+

@@ -1,0 +1,233 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb 27 15:12:40 2020
+
+@author: Daniel
+"""
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+M_earth = 5.972*10**24
+M_moon = 7.35*10**22
+G = 6.67*10**(-11)
+#radius of orbit of moon
+R = 3.85*10**8
+
+def f1(vxi):
+    #vx
+    f = vxi
+    return f
+
+def f2(vyi):
+    #vy
+    f = vyi
+    return f
+
+def f3(xi,yi,M):
+    #dvx/dt
+    f = -G*M_earth*xi*(xi**2+yi**2)**(-3/2)-G*M*(xi-R)*((xi-R)**2+yi**2)**(-3/2)
+    return f
+    
+def f4(xi,yi,M):
+    #dvy/dt
+    f = -G*M_earth*yi*(xi**2+yi**2)**(-3/2) -G*M*yi*((xi-R)**2+yi**2)**(-3/2)
+    return f
+    
+MyInput = '0'
+while MyInput != 'q':
+    MyInput = input('Enter a choice, "a" for a rocket orbiting the Earth, "b" for rocket orbiting the Earth and Moon or "q" to quit: ')
+    
+    if MyInput == 'a':
+        #rocket orbiting around Earth
+        
+        #arrays
+        t = []
+        x = []
+        y = []
+        vx = []
+        vy = []
+        
+        #starting values which will hange with each iteration
+        ti = 0 
+        xi = 7*10**7
+        yi = 0
+        vxi = 0
+        vyi = 3200
+        
+        print("Calculating the orbit of a rocket starting at x position",
+              xi,"m and with velocity",vyi,"m/s in the y direction...")
+        
+        #There is no moon so f3 and f4 will have no 2nd term
+        M = 0
+        
+        #time iteration
+        h = 1
+        
+        i = 0
+        while i <= 10000000:
+            t.append(ti)
+            x.append(xi)
+            y.append(yi)
+            vx.append(vxi)
+            vy.append(vyi)
+            
+            k1x = f1(vxi)
+            k1y = f2(vyi)
+            k1vx = f3(xi,yi,M)
+            k1vy = f4(xi,yi,M)
+            
+            k2x = f1(vxi+h*k1vx*0.5)
+            k2y = f2(vyi+h*k1vy*0.5)
+            k2vx = f3(xi+h*k1x*0.5,yi+h*k1y*0.5,M)
+            k2vy = f4(xi+h*k1x*0.5,yi+h*k1y*0.5,M)
+            
+            k3x = f1(vxi+h*k2vx*0.5)
+            k3y = f2(vyi+h*k2vy*0.5)
+            k3vx = f3(xi+h*k2x*0.5,yi+h*k2y*0.5,M)
+            k3vy = f4(xi+h*k2x*0.5,yi+h*k2y*0.5,M)
+            
+            k4x = f1(vxi+h*k3vx)
+            k4y = f2(vyi+h*k3vy)
+            k4vx = f3(xi+h*k3x,yi+h*k3y,M)
+            k4vy = f4(xi+h*k3x,yi+h*k3y,M)
+
+            xi = x[i]+h/6*(k1x+k2x*2+k3x*2+k4x)
+            yi = y[i]+h/6*(k1y+k2y*2+k3y*2+k4y)
+            vxi = vx[i]+h/6*(k1vx+k2vx*2+k3vx*2+k4vx)
+            vyi = vy[i]+h/6*(k1vy+k2vy*2+k3vy*2+k4vy)
+            ti = t[i]+h
+            
+            i += 1
+            
+            #This is so it ends after 1 orbit
+            if ti >= 1000000 and xi >= 6.999*10**7:
+                break
+        
+        plt.title("x position against y position")
+        plt.plot(x,y)
+        plt.xlabel("x position (m)")
+        plt.ylabel("y position (m)")
+        Earth = plt.Circle([0,0], 6371000, color = 'g', label = 'Earth')
+        plt.gcf().gca().add_artist(Earth)
+        plt.show()
+        
+        #Calculate Kinetic energy and grav potential
+        K = np.zeros(len(t))
+        V = np.zeros(len(t))
+        for i in range(len(t)):
+            K[i] = 0.5*(vx[i]**2+vy[i]**2)
+            V[i] = G*M_earth/(x[i]**2+y[i]**2)**0.5
+            
+        plt.title("Energy per unit mass of the rocket over an orbit")
+        plt.plot(t,K+V)
+        plt.xlabel("time (s)")
+        plt.ylabel("Energy per unit mass (J/Kg)")
+        plt.show()
+        
+    elif MyInput == 'b':
+        #rocket orbiting around moon + Earth
+        
+        #arrays
+        t = []
+        x = []
+        y = []
+        vx = []
+        vy = []
+        
+        #starting values
+        ti = 0 
+        xi = -7*10**6
+        yi = 0
+        vxi = 0
+        vyi = 10557.65
+        
+        #There is a moon so f3 and f4 will have a 2nd term
+        M = M_moon
+        
+        #time iteration
+        h = 1
+        
+        i = 0
+        
+        #minheight will keep track of rocket's lowest height above moon
+        minheight = R
+        
+        print("Calculating the path of rocket starting on the x axis at the position",
+              xi,"m with velocity",vyi,"in the y direction...")
+        
+        while i <= 1000000:
+            t.append(ti)
+            x.append(xi)
+            y.append(yi)
+            vx.append(vxi)
+            vy.append(vyi)
+            
+            k1x = f1(vxi)
+            k1y = f2(vyi)
+            k1vx = f3(xi,yi,M)
+            k1vy = f4(xi,yi,M)
+            
+            k2x = f1(vxi+h*k1vx*0.5)
+            k2y = f2(vyi+h*k1vy*0.5)
+            k2vx = f3(xi+h*k1x*0.5,yi+h*k1y*0.5,M)
+            k2vy = f4(xi+h*k1x*0.5,yi+h*k1y*0.5,M)
+            
+            k3x = f1(vxi+h*k2vx*0.5)
+            k3y = f2(vyi+h*k2vy*0.5)
+            k3vx = f3(xi+h*k2x*0.5,yi+h*k2y*0.5,M)
+            k3vy = f4(xi+h*k2x*0.5,yi+h*k2y*0.5,M)
+            
+            k4x = f1(vxi+h*k3vx)
+            k4y = f2(vyi+h*k3vy)
+            k4vx = f3(xi+h*k3x,yi+h*k3y,M)
+            k4vy = f4(xi+h*k3x,yi+h*k3y,M)
+
+            xi += h/6*(k1x+k2x*2+k3x*2+k4x)
+            yi += h/6*(k1y+k2y*2+k3y*2+k4y)
+            vxi += h/6*(k1vx+k2vx*2+k3vx*2+k4vx)
+            vyi += h/6*(k1vy+k2vy*2+k3vy*2+k4vy)
+            ti += h
+            
+            i += 1
+            
+            #End state for if rocket hits Earth
+            if (xi**2+yi**2)**0.5 < 6371000:
+                print("Rocket hit Earth. Final position:",xi,yi)
+                break
+            
+            #End state for if rocket hits Moon
+            if ((R-xi)**2+yi**2)**0.5 < 1737100:
+                print("Rocket hit moon. Final position:",xi,yi)
+                break
+            
+            #End state for if rocket gets too far away from Earth and Moon
+            if yi > 2*10**8 or yi < -2*10**8 or xi > 6*10**8 or xi < -2*10**8:
+                print("Out of bounds")
+                break
+            
+            #Test if the rocket has gotten closer too the Moon and update minheight
+            if minheight > ((xi-R)**2+yi**2)**0.5:
+                minheight = ((xi-R)**2+yi**2)**0.5
+                
+            #Ends process after rocket ends up back where it started
+            if ti >= 1000000 and xi <= -6.99*10**6:
+                break
+                
+        plt.title("x position against y position")
+        Moon = plt.Circle([R,0], 1737100, color = 'grey', label = 'Moon')
+        plt.gcf().gca().add_artist(Moon)
+        Earth = plt.Circle([0,0], 6371000, color = 'g', label = 'Earth')
+        plt.gcf().gca().add_artist(Earth)
+        
+        plt.plot(x,y)
+        plt.xlabel("x position (m)")
+        plt.ylabel("y position (m)")
+        plt.show()
+       
+        print("Minimum height is",minheight-1737100,"m above the surface of the moon")
+        print("Time duration of orbit:",t[len(t)-1])
+    elif MyInput != 'q':
+        print('This is not a valid choice')
+        
+print('You have chosen to finish - goodbye.')

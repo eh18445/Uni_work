@@ -1,0 +1,306 @@
+---
+title: "Assignment 2"
+author: "Daniel Johnstone"
+date: "2022-10-05"
+output: html_document
+---
+
+## 1.1 Q1
+Select and filter:  Use a combination of the select() and filter() functions to generate a data frame called “hSF” which
+is a sub-table of the original Hawks data frame. Include columns Wing, weight and tail. Include only hawks that belong to the red-tailed hawks catregory and weigh over 1kg.
+
+```{r 1.1-1}
+#use filter for rows and select for columns
+hSF <- Hawks %>% filter(Species=="RT" & Weight>1000) %>% select(Wing,Weight,Tail)
+print(hSF)
+```
+
+##1.1 Q2
+The data frame has 3 variables. How would you communicate this to a machine learning practitioner?
+hSF has how many examples?, observations?, cases?
+
+##1.2 Q1
+Use the arrange() function to sort the hSF data frame created in the previous section so that the rows
+appear in order of increasing wing span. Then use the head command to print out the top five rows of your sorted data frame.
+
+```{r 1.2-1}
+hSF %>% arrange(Wing) %>% head(5) %>% print()
+```
+
+##1.3 Q1
+Use data.frame() to create a data frame that is called hawkSpeciesNameCodes containing the correspondence between codes and the full species names.
+
+```{r 1.3-1}
+species_code <- c("CH","RT","SS")
+species_name_full <- c("Cooper's","Red-tailed","Sharp-shinned")
+
+hawkSpeciesNameCodes <- data.frame(species_code,species_name_full)
+print(hawkSpeciesNameCodes)
+```
+
+##1.3 Q2
+Use a combination of the functions left_join(), the rename() and the select() functions to create
+a new data frame called “hawksFullName” which is the same as the “Hawks” data frame except that the
+Species column contains the full names rather than the two-letter codes.
+
+```{r 1.3-2}
+#In left_jion() the by vector specifies which variables to match from each data frame
+hawksFullName <- left_join(Hawks,hawkSpeciesNameCodes,by=c("Species"="species_code")) %>% select(-Species)
+
+rename(hawksFullName, Species=species_name_full) %>% print() 
+```
+
+##1.3 Q3
+Use a combination of the head() and select() functions to print out the top seven rows of the columns
+“Species”, “Wing” and “Weight” of the data frame called “hawksFullName”. Do this without modifying
+the data frame you just created.
+
+```{r 1.3-3}
+hawksFullName <- rename(hawksFullName, Species=species_name_full)
+
+hawksFullName %>% select(Species,Wing,Weight) %>% head(7) %>% print()
+```
+
+Does it matter what type of join function you use here?
+In what situations would it make a difference?
+
+It doesn't matter what join function you use but it would make a difference if there were missing values in either data frame.
+
+##1.4 Q1
+The “bird BMI” is equal to the weight of the hawk (in grams) divided by their wing span (in millimeters) squared.
+ 
+Use the mutate(), select() and arrange() functions to create a new data frame called “hawksWithBMI” which has the same number of rows as the original Hawks data frame but only two columns - one with their Species and one with their “bird BMI”. Also, arrange the rows in descending order of “bird
+BMI”. Display top 8 rows of the resulting data frame.
+
+```{r 1.4-1}
+#use mutate to add columns
+hawksWithBMI <- Hawks %>% mutate(bird_BMI=Weight*10^3/Wing^2) %>% select(Species,bird_BMI) %>% arrange(desc(bird_BMI)) %>% head(8)
+print(hawksWithBMI)
+```
+
+##1.5 Q1
+Using the data frame “hawksFullName” and in combination with the summarize() and the group_by functions, create a summary table, broken down by Hawk species, which contains the following summary quantities:
+The number of rows (num_rows)
+The average wing span in centimeters (mn_wing)
+The median wing span in centimeters (nd_wing)
+The trimmed average wing span in centimeters with trim=0.1, i.e., the mean of the numbers after the 10% largest and the 10% smallest values being removed (t_mn_wing)
+The biggest ratio between wing span and tail length (b_wt_ratio).
+
+```{r 1.5-1}
+hawksFullName %>% group_by(Species) %>% summarize(num_rows=n(),mn_wing=mean(Wing),nd_wing=median(Wing),t_mn_wing=mean(Wing,trim=0.1),b_wt_ratio=max(Wing/Tail)) %>% print()
+```
+
+##1.5 Q2
+Next create a summary table of the following form: Your summary table will show the number of missing
+values, broken down by species, for the columns Wing, Weight, Culmen, Hallux, Tail, StandardTail,
+Tarsus, and Crop. You can complete this task by combining the select(), group_by(), summarize(),
+across(), everything(), sum() and is.na() functions
+
+```{r 1.5-2}
+#The ~sum(is.na()) part the function(x){sum(is.na(x))}
+Hawks %>% group_by(Species) %>% summarize(across(everything(),~sum(is.na(.x)))) %>% select(Species,Wing,Weight,Culmen,Hallux,Tail,StandardTail,Tarsus,Crop) %>% print()
+```
+
+##2.1 Q1
+The following function performs imputation by mean. What library do we need to load to run this
+function?
+
+```{r 2.1-1}
+impute_by_mean <- function(x){
+  mu <- mean(x,na.rm=TRUE)
+  impute_f <- function(z){
+    if(is.na(z)){
+      return(mu)
+    }else{
+      return(z)
+    }
+  }
+  return(map_dbl(x,impute_f))
+}
+```
+
+Need to load purrr library
+
+#2.1 Q2
+Create a function called impute_by_median which imputes missing values based on the median of the
+sample, rather than the mean.
+
+```{r 2.1-2}
+impute_by_median <- function(x){
+  med <- median(x,na.rm=TRUE) #calculates the median excluding NA values
+  impute_k <- function(y){ #function to test each element and if NA replace with median
+    if(is.na(y)){
+      return(med)
+    }else{
+      return(y)
+    }
+  }
+  return(map_dbl(x,impute_k)) #map function applies function impute_k to every element of x
+}
+
+impute_by_median(c(1,2,NA,4)) %>% print()
+```
+
+##2.1 Q3
+Next generate a data frame with two variables x and y. For our first variable x we have a sequence
+(x1, x2, · · · , xn) where x1 = 0, xn = 10 and for each i = 1, · · · , n − 1, xi+1 = xi + 0.1. For our second variable y we set yi = 5xi + 1 for i = 1, · · · , n. Generate data of this form and place within a data frame called df_xy
+
+```{r 2.1-3}
+x <- c(seq(0,10,0.1))
+y <- 5*x +1
+df_xy <- data.frame(x,y)
+df_xy %>% head(5) %>% print()
+```
+
+##2.1 Q4
+The map2() function is similar to the map() function but iterates over two variables in parallel rather than one. 
+
+We will now use map2_dbl() to generate a new data frame with missing data.
+First create a function sometimes_missing with two arguments: index and value. The function should return NA if index is divisible by 5 and value otherwise.
+
+Next generate a new data frame called df_xy_missing with two variables x and y, but some missing data. For
+the first variable x we have a sequence (x1, · · · , xn), which is precisely the same as with df_xy. For the second
+variable y we have a sequence (y1, · · · , yn) where yi = NA if i is divisible by 5 and otherwise yi = 5xi + 1.
+To generate the data frame d_xy_missing you may want to make use of the functions row_number(),
+map2_dbl(), mutate() as well as sometimes_missing().
+
+```{r 2.1-4}
+#use row_number() to check if row divisible by 5
+#use map2_dbl() to apply function
+#mutate() to replace y column with new values
+
+df_xy_missing <- df_xy %>% mutate(y = map2_dbl(row_number(),y,sometimes_missing))
+
+df_xy_missing %>% head(10) %>% print()
+```
+
+##2.1 Q5
+Create a new data frame df_xy_imputed with two variables x and y. 
+For the first variable x we have a sequence (x1, · · · , xn), which is precisely the same as with df_xy. For the second variable y we have a sequence (y′1, · · · , y′n) which is formed from (y1, · · · , yn) by imputing any missing values with the median.
+To generate df_xy_imputed from df_xy_missing by applying a combination of the functions mutate() and
+impute_by_median().
+
+```{r 1.2-5}
+#replace missing values in df_xy_missing with median using impute_by_median()
+df_xy_imputed <- df_xy_missing %>% mutate(y = impute_by_median(y))
+
+df_xy_imputed %>% head(6) %>% print()
+```
+
+##2.2 Q1
+First read for .xslx file
+```{r 2.2-1}
+folder_path<-"C:/Users/danie/OneDrive/Documents/R/SCEM/assignment 2/" # set this to the name of the
+# directory containing "HockeyLeague.xlsx"
+file_name<-"HockeyLeague(3).xlsx" # set the file name
+file_path<-paste(folder_path,file_name,sep="") # create the file_path
+wins_data_frame<-read_excel(file_path,sheet="Wins") # read of a sheet from an xl file
+```
+
+This is not tidy data
+
+Now apply your data wrangling skills to transform the “wins_data_frame” data frame object into
+a data frame called “wins_tidy” which contains the same information but has just four columns entitled
+“Team”, “Year”, “Wins”, “Total”. The “Team” column should contain the team name, the “Year” column
+should contain the year, the “Wins” column should contain the number of wins for that season and the
+“Total” column the total number of games for that season. The first column should be of character type
+and the remaining columns should be of integer type. You can do this by combining the following functions:
+rename(), pivot_longer(), mutate() and separate().
+
+```{r 2.2-1 part 2}
+#create wins_tidy
+#columns: teams,year,win,total
+#rename(), pivot_longer(), mutate() and separate()
+
+columns <- c(colnames(wins_data_frame)) 
+columns <- columns[! columns %in% '...1']
+wins_tidy <- wins_data_frame %>% pivot_longer(columns,names_to='year',values_to='wins_per_season') %>% separate(wins_per_season,into=c("wins","total"),sep=" of ",convert=TRUE)
+wins_tidy %>% type.convert(as.is=TRUE) %>% rename(teams='...1') %>% print()
+```
+
+##2.2 Q2
+Apply a similar procedure to read the data from this sheet and transform that data into a data frame called “losses_tidy” with four columns: “Team”, “Year”, “Losses”, “Total” which are similar to those in the “wins_tidy” data frame except for the “Losses” column gives the number of losses for a given season and team, rather than the number of losses.
+
+```{r 2.2-2}
+#create wins_tidy
+#columns: teams,year,win,total
+#rename(), pivot_longer(), mutate() and separate()
+
+columns <- c(colnames(losses_data_frame)) 
+columns <- columns[! columns %in% '...1']
+losses_tidy <- losses_data_frame %>% pivot_longer(columns,names_to='year',values_to='losses_per_season') %>% separate(losses_per_season,into=c("losses","total"),sep=" of ",convert=TRUE)
+losses_tidy %>% type.convert(as.is=TRUE) %>% rename(teams='...1') %>% print()
+
+```
+
+##2.2 Q3
+“wins_tidy” and “losses_tidy”, into a single data frame entitled “hockey_df” which has 248 rows and 9 columns: A “Team” column which gives the name of the team as a character, the “Year” column which gives the season year, the “Wins” column which gives the number of wins for that team in the given year, the “Losses” column which gives the number of losses for that team in the given year and the “Draws” column which gives the number of draws for that team in the given year, the “Wins_rt” which gives the wins as a proportion of the total number of games (ie. Wins/Total) and similarly the “Losses_rt” and the “Draws_rt” which gives the losses and draws as a proportion of the total, respectively. 
+To do this you can make use of the mutate() function. You may also want to utilise the across() function for a slightly neater solution.
+
+```{r}
+#columns: team, year, wins, losses, total, draws, wins_rt, losses_rt, draws_rt
+hockey_df <- full_join(wins_tidy,losses_tidy) %>% mutate(draws=total-wins-losses,wins_rt=wins/total,losses_rt=losses/total,draws_rt=draws/total)
+hockey_df %>% head(5) %>% print()
+```
+
+##2.2 Q4
+To conclude this task generate a summary data frame which displays, for each team, the median win
+rate, the mean win rate, the median loss rate, the mean loss rate, the median draw rate and the mean draw
+rate. The number of rows in your summary should equal the number of teams. These should be sorted
+in descending order of median win rate. You may want to make use of the following functions: select(),
+group_by(), across(), arrange().
+
+```{r 2.2-4}
+#summary for means
+hockey_mn <- hockey_df %>% group_by(teams) %>% select(wins_rt,losses_rt,draws_rt) %>% summarise(across(everything(),~mean(.x))) %>% rename(W_mn=wins_rt,L_mn=losses_rt,D_mn=draws_rt)
+#summary for medians
+hockey_med <- hockey_df %>% group_by(teams) %>% select(wins_rt,losses_rt,draws_rt) %>% summarise(across(everything(),~median(.x))) %>% rename(W_med=wins_rt,L_med=losses_rt,D_med=draws_rt)
+#join then arrange descending based on median wins
+hockey_sum <- full_join(hockey_mn,hockey_med) %>% arrange(desc(W_med))
+print(hockey_sum)
+```
+
+##3 Q1
+Use a combination of the functions filter(), ggplot() and geom_histogram to create a histogram plot
+of the Wins of Ducks within data frame wins_tidy with bin widths of 3. 
+
+```{r 3-1}
+#using wins_tidy. Create histogram opf the wins of Ducks. binwidth 3
+#filter(), ggplot() and geom_histogram
+
+wins_plot <- ggplot(data=filter(wins_tidy,teams == 'Ducks'),aes(x=wins)) + xlab("number of wins by ducks")
+plot(wins_plot + geom_histogram(binwidth=3) + ylab("count"))
+```
+
+##3 Q2
+Similar to (Q1), use the geom_density() function to create two density plots, with parameters
+adjust=0.5 and adjust=2
+
+```{r 3-2}
+plot(wins_plot + geom_density(adjust=0.5) + ylab("Count"))
+plot(wins_plot + geom_density(adjust=2) + ylab("Count"))
+```
+
+The difference between the plots is due to the bandwidth adjustment.
+
+##3 Q3
+Next, let’s create a bivariate plot. First, from wins_tidy, create a data frame called wins_teams with
+columns: Year, Ducks, Eagles, as well as the other teams. For example, the column Ducks represent the
+Wins of the team Ducks for different years. You can use a combination of select and pivot_wider to do so.
+
+Then from wins_team, use geom_point() to create a scatter plot, the x-axis is the Wins of Ducks, and the
+y-axis is the Wins of Eagles.
+
+```{r 3-3}
+#using wins_tidy create data frame wins_teams with columns: Year, Ducks, Eagles, as well as the other teams.
+#use select() and pivot_wider()
+
+wins_teams <- wins_tidy %>% pivot_wider(names_from=teams,values_from=wins) %>% select(-total)
+print(wins_teams)
+
+#create scatter plot
+teams_plot <- ggplot(data=wins_teams,aes(x=Ducks,y=Eagles)) + xlab("Wins by Ducks") + ylab("Wins by Eagles")
+plot(teams_plot + geom_point(size=3))
+```
+
+

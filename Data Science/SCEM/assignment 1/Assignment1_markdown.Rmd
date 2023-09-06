@@ -1,0 +1,15 @@
+---
+title: "Assignment1"
+author: "Daniel Johnstone"
+date: "2022-09-28"
+output: html_document
+---
+
+#Creating DataFrame
+```{r}
+animals = c("Snake","Alligator","Ostrich","cow","Koala")
+num_legs = c(0,4,2,4,2)
+
+animals_df <- data.frame(animals,num_legs)
+print(animals_df)
+```
